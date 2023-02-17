@@ -94,7 +94,10 @@ func resourceSysdigGroupMappingRead(getGroupMapper GetGroupMapper) schema.ReadCo
 			return diag.FromErr(err)
 		}
 
-		groupMappingToResourceData(groupMapping, d)
+		err = groupMappingToResourceData(groupMapping, d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		return nil
 	}
