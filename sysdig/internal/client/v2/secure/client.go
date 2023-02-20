@@ -1,3 +1,4 @@
+// Package secure extends common client with secure specific logic.
 package secure
 
 import (
@@ -5,11 +6,10 @@ import (
 )
 
 type client struct {
-	*common.Client
+	common.Client
 }
 type Client interface {
-	SetExtraHeaders(extraHeaders map[string]string)
-	common.GroupMapper
+	common.Client
 }
 
 func NewClient(token string, url string, insecure bool) Client {

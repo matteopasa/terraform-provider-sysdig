@@ -18,7 +18,7 @@ type GroupMapper interface {
 	GetGroupMapping(ctx context.Context, id int) (*GroupMapping, error)
 }
 
-func (client *Client) CreateGroupMapping(ctx context.Context, request *GroupMapping) (*GroupMapping, error) {
+func (client *client) CreateGroupMapping(ctx context.Context, request *GroupMapping) (*GroupMapping, error) {
 	payload, err := request.ToJSON()
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (client *Client) CreateGroupMapping(ctx context.Context, request *GroupMapp
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return nil, ErrorFromResponse(response)
+		return nil, client.ErrorFromResponse(response)
 	}
 
 	body, err := io.ReadAll(response.Body)
@@ -48,7 +48,7 @@ func (client *Client) CreateGroupMapping(ctx context.Context, request *GroupMapp
 	return &groupMapping, nil
 }
 
-func (client *Client) UpdateGroupMapping(ctx context.Context, request *GroupMapping, id int) (*GroupMapping, error) {
+func (client *client) UpdateGroupMapping(ctx context.Context, request *GroupMapping, id int) (*GroupMapping, error) {
 	payload, err := request.ToJSON()
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (client *Client) UpdateGroupMapping(ctx context.Context, request *GroupMapp
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return nil, ErrorFromResponse(response)
+		return nil, client.ErrorFromResponse(response)
 	}
 
 	body, err := io.ReadAll(response.Body)
@@ -78,7 +78,7 @@ func (client *Client) UpdateGroupMapping(ctx context.Context, request *GroupMapp
 	return &groupMapping, nil
 }
 
-func (client *Client) DeleteGroupMapping(ctx context.Context, id int) error {
+func (client *client) DeleteGroupMapping(ctx context.Context, id int) error {
 	response, err := client.DoSysdigRequest(ctx, http.MethodDelete, client.DeleteGroupMappingUrl(id), nil)
 	if err != nil {
 		return err
@@ -86,13 +86,13 @@ func (client *Client) DeleteGroupMapping(ctx context.Context, id int) error {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusNoContent && response.StatusCode != http.StatusOK && response.StatusCode != http.StatusNotFound {
-		return ErrorFromResponse(response)
+		return client.ErrorFromResponse(response)
 	}
 
 	return nil
 }
 
-func (client *Client) GetGroupMapping(ctx context.Context, id int) (*GroupMapping, error) {
+func (client *client) GetGroupMapping(ctx context.Context, id int) (*GroupMapping, error) {
 	response, err := client.DoSysdigRequest(ctx, http.MethodGet, client.GetGroupMappingUrl(id), nil)
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func (client *Client) GetGroupMapping(ctx context.Context, id int) (*GroupMappin
 		if response.StatusCode == http.StatusNotFound {
 			return nil, GroupMappingNotFound
 		}
-		return nil, ErrorFromResponse(response)
+		return nil, client.ErrorFromResponse(response)
 	}
 
 	body, err := io.ReadAll(response.Body)
@@ -119,18 +119,18 @@ func (client *Client) GetGroupMapping(ctx context.Context, id int) (*GroupMappin
 
 	return &groupMapping, nil
 }
-func (client *Client) GetGroupMappingUrl(id int) string {
+func (client *client) GetGroupMappingUrl(id int) string {
 	return fmt.Sprintf("%s/api/groupmappings/%d", client.URL, id)
 }
 
-func (client *Client) CreateGroupMappingUrl() string {
+func (client *client) CreateGroupMappingUrl() string {
 	return fmt.Sprintf("%s/api/groupmappings", client.URL)
 }
 
-func (client *Client) UpdateGroupMappingUrl(id int) string {
+func (client *client) UpdateGroupMappingUrl(id int) string {
 	return fmt.Sprintf("%s/api/groupmappings/%d", client.URL, id)
 }
 
-func (client *Client) DeleteGroupMappingUrl(id int) string {
+func (client *client) DeleteGroupMappingUrl(id int) string {
 	return fmt.Sprintf("%s/api/groupmappings/%d", client.URL, id)
 }

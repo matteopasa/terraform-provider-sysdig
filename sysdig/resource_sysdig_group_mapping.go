@@ -22,14 +22,14 @@ func resourceSysdigSecureGroupMapping() *schema.Resource {
 	})
 }
 
-func resourceSysdigGroupMapping(gm GetGroupMapper) *schema.Resource {
+func resourceSysdigGroupMapping(getGroupMapper GetGroupMapper) *schema.Resource {
 	timeout := 5 * time.Minute
 
 	return &schema.Resource{
-		ReadContext:   resourceSysdigGroupMappingRead(gm),
-		CreateContext: resourceSysdigGroupMappingCreate(gm),
-		UpdateContext: resourceSysdigGroupMappingUpdate(gm),
-		DeleteContext: resourceSysdigGroupMappingDelete(gm),
+		ReadContext:   resourceSysdigGroupMappingRead(getGroupMapper),
+		CreateContext: resourceSysdigGroupMappingCreate(getGroupMapper),
+		UpdateContext: resourceSysdigGroupMappingUpdate(getGroupMapper),
+		DeleteContext: resourceSysdigGroupMappingDelete(getGroupMapper),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
