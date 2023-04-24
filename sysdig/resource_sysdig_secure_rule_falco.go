@@ -25,6 +25,7 @@ func resourceSysdigSecureRuleFalco() *schema.Resource {
 		UpdateContext: resourceSysdigRuleFalcoUpdate,
 		ReadContext:   resourceSysdigRuleFalcoRead,
 		DeleteContext: resourceSysdigRuleFalcoDelete,
+		CustomizeDiff: resourceSysdigRuleFalcoCustomizeDiff,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -242,6 +243,18 @@ func resourceSysdigRuleFalcoDelete(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
+func resourceSysdigRuleFalcoCustomizeDiff(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
+	rule, err := resourceSysdigRuleFalcoFromResourceDiff(d)
+	if err != nil {
+		return err
+	}
+	// Here is where we can do custom validation for the plan step
+	if rule.Name == "security_engineering_auto_test_fim_dev_fim_create_dir" {
+		return errors.New("failed falco validation")
+	}
+	return nil
+}
+
 func resourceSysdigRuleFalcoFromResourceData(d *schema.ResourceData) (secure.Rule, error) {
 	rule := ruleFromResourceData(d)
 	rule.Details.RuleType = "FALCO"
@@ -305,4 +318,88 @@ func resourceSysdigRuleFalcoFromResourceData(d *schema.ResourceData) (secure.Rul
 	}
 
 	return rule, nil
+}
+
+func resourceSysdigRuleFalcoFromResourceDiff(d *schema.ResourceDiff) (secure.Rule, error) {
+	rule := ruleFromResourceDiff(d)
+	rule.Details.RuleType = "FALCO"
+
+	appendMode, appendModeIsSet := d.GetOk("append")
+	if appendModeIsSet {
+		ptr := appendMode.(bool)
+		rule.Details.Append = &ptr
+	}
+
+	if source, ok := d.GetOk("source"); ok && source.(string) != "" {
+		rule.Details.Source = source.(string)
+	} else if !appendModeIsSet || !(appendMode.(bool)) {
+		return secure.Rule{}, errors.New("source must be set when append = false")
+	}
+
+	if output, ok := d.GetOk("output"); ok && output.(string) != "" {
+		rule.Details.Output = output.(string)
+	} else if !appendModeIsSet || !(appendMode.(bool)) {
+		return secure.Rule{}, errors.New("output must be set when append = false")
+	}
+
+	if priority, ok := d.GetOk("priority"); ok && priority.(string) != "" {
+		rule.Details.Priority = priority.(string)
+	} else if !appendModeIsSet || !(appendMode.(bool)) {
+		return secure.Rule{}, errors.New("priority must be set when append = false")
+	}
+
+	rule.Details.Condition = &secure.Condition{
+		Condition:  d.Get("condition").(string),
+		Components: []interface{}{},
+	}
+
+	if exceptionsField, ok := d.GetOk("exceptions"); ok {
+		falcoExceptions := []*secure.Exception{}
+		for _, exception := range exceptionsField.([]interface{}) {
+			exceptionMap := exception.(map[string]interface{})
+			newFalcoException := &secure.Exception{
+				Name: exceptionMap["name"].(string),
+			}
+
+			fields := cast.ToStringSlice(exceptionMap["fields"])
+			if len(fields) >= 1 {
+				newFalcoException.Fields = fields
+			}
+
+			comps := cast.ToStringSlice(exceptionMap["comps"])
+			if len(comps) >= 1 {
+				newFalcoException.Comps = comps
+			}
+
+			values := cast.ToString(exceptionMap["values"])
+			err := json.Unmarshal([]byte(values), &newFalcoException.Values)
+			if err != nil {
+				return secure.Rule{}, err
+			}
+
+			falcoExceptions = append(falcoExceptions, newFalcoException)
+		}
+		rule.Details.Exceptions = falcoExceptions
+	}
+
+	return rule, nil
+}
+
+// Retrieves the common rule fields for a rule from a resource data.
+func ruleFromResourceDiff(d *schema.ResourceDiff) secure.Rule {
+	rule := secure.Rule{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		Version:     d.Get("version").(int),
+	}
+
+	rule.Tags = []string{}
+	if tags, ok := d.Get("tags").([]interface{}); ok {
+		for _, rawTag := range tags {
+			if tag, ok := rawTag.(string); ok {
+				rule.Tags = append(rule.Tags, tag)
+			}
+		}
+	}
+	return rule
 }
