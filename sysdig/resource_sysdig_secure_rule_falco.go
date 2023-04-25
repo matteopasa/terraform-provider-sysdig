@@ -244,15 +244,23 @@ func resourceSysdigRuleFalcoDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceSysdigRuleFalcoCustomizeDiff(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
+	client, err := meta.(SysdigClients).sysdigSecureClient()
+	if err != nil {
+		return err
+	}
+
 	rule, err := resourceSysdigRuleFalcoFromResourceDiff(d)
 	if err != nil {
 		return err
 	}
-	// Here is where we can do custom validation for the plan step
-	if rule.Name == "security_engineering_auto_test_fim_dev_fim_create_dir" {
-		return errors.New("failed falco validation")
+
+	if len(d.Id()) == 0 {
+		err = client.ValidateCreateRule(ctx, rule)
+	} else {
+		rule.ID, _ = strconv.Atoi(d.Id())
+		err = client.ValidateUpdateRule(ctx, rule)
 	}
-	return nil
+	return err
 }
 
 func resourceSysdigRuleFalcoFromResourceData(d *schema.ResourceData) (secure.Rule, error) {

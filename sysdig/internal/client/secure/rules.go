@@ -15,6 +15,14 @@ func (client *sysdigSecureClient) ruleURL(ruleID int) string {
 	return fmt.Sprintf("%s/api/secure/rules/%d", client.URL, ruleID)
 }
 
+func (client *sysdigSecureClient) validateRulesURL() string {
+	return fmt.Sprintf("%s/api/secure/rules?validateOnly=true", client.URL)
+}
+
+func (client *sysdigSecureClient) validateRuleURL(ruleID int) string {
+	return fmt.Sprintf("%s/api/secure/rules/%d?validateOnly=true", client.URL, ruleID)
+}
+
 func (client *sysdigSecureClient) CreateRule(ctx context.Context, rule Rule) (result Rule, err error) {
 	response, err := client.doSysdigSecureRequest(ctx, http.MethodPost, client.rulesURL(), rule.ToJSON())
 	if err != nil {
@@ -32,6 +40,20 @@ func (client *sysdigSecureClient) CreateRule(ctx context.Context, rule Rule) (re
 	}
 	result, err = RuleFromJSON(body)
 	return
+}
+
+func (client *sysdigSecureClient) ValidateCreateRule(ctx context.Context, rule Rule) (err error) {
+	response, err := client.doSysdigSecureRequest(ctx, http.MethodPost, client.validateRulesURL(), rule.ToJSON())
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return errorFromResponse(response)
+	}
+
+	return err
 }
 
 func (client *sysdigSecureClient) GetRuleByID(ctx context.Context, ruleID int) (result Rule, err error) {
@@ -71,6 +93,20 @@ func (client *sysdigSecureClient) UpdateRule(ctx context.Context, rule Rule) (re
 	}
 	result, err = RuleFromJSON(body)
 	return
+}
+
+func (client *sysdigSecureClient) ValidateUpdateRule(ctx context.Context, rule Rule) (err error) {
+	response, err := client.doSysdigSecureRequest(ctx, http.MethodPut, client.validateRuleURL(rule.ID), rule.ToJSON())
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return errorFromResponse(response)
+	}
+
+	return err
 }
 
 func (client *sysdigSecureClient) DeleteRule(ctx context.Context, ruleID int) error {

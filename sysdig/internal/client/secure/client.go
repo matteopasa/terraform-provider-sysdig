@@ -21,6 +21,8 @@ type SysdigSecureClient interface {
 	GetRuleByID(context.Context, int) (Rule, error)
 	UpdateRule(context.Context, Rule) (Rule, error)
 	DeleteRule(context.Context, int) error
+	ValidateCreateRule(context.Context, Rule) error
+	ValidateUpdateRule(context.Context, Rule) error
 
 	CreateNotificationChannel(context.Context, NotificationChannel) (NotificationChannel, error)
 	GetNotificationChannelById(context.Context, int) (NotificationChannel, error)
