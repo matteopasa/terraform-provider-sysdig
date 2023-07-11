@@ -38,6 +38,17 @@ type UserRoles struct {
 	Admin  bool   `json:"admin,omitempty"`
 }
 
+type CustomRole struct {
+	ID                 int      `json:"id,omitempty"`
+	Name               string   `json:"name"`
+	Description        string   `json:"description,omitempty"`
+	MonitorPermissions []string `json:"monitorPermissions,omitempty"`
+	SecurePermissions  []string `json:"securePermissions,omitempty"`
+}
+type customRoleListWrapper struct {
+	Roles []CustomRole `json:"roles"`
+}
+
 type EntryPoint struct {
 	Module    string `json:"module"`
 	Selection string `json:"selection,omitempty"`
