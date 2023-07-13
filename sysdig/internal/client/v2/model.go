@@ -49,6 +49,16 @@ type customRoleListWrapper struct {
 	Roles []CustomRole `json:"roles"`
 }
 
+type Permission struct {
+	Authority   string   `json:"authority"`
+	Description string   `json:"description"`
+	Products    []string `json:"products"`
+}
+
+type permissionListWrapper struct {
+	Permissions []Permission `json:"permissions"`
+}
+
 type EntryPoint struct {
 	Module    string `json:"module"`
 	Selection string `json:"selection,omitempty"`

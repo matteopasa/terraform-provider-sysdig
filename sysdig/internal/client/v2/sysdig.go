@@ -21,6 +21,7 @@ type SysdigCommon interface {
 	GroupMappingInterface
 	GroupMappingConfigInterface
 	CustomRoleInterface
+	PermissionInterface
 }
 
 type SysdigMonitor interface {
