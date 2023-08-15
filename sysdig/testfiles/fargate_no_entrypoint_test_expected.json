@@ -1,0 +1,108 @@
+[
+    {
+        "Name": "test",
+        "Image": "test_image:latest",
+        "EntryPoint": [
+            "/opt/draios/bin/instrument"
+        ],
+        "Command": [],
+        "Environment": [
+            {
+                "Name": "SYSDIG_ORCHESTRATOR_PORT",
+                "Value": "orchestrator_port"
+            },
+            {
+                "Name": "SYSDIG_COLLECTOR",
+                "Value": "collector_host"
+            },
+            {
+                "Name": "SYSDIG_COLLECTOR_PORT",
+                "Value": "collector_port"
+            },
+            {
+                "Name": "SYSDIG_AGENT_ACCESS_KEY",
+                "Value": "sysdig_agent_access_key"
+            },
+            {
+                "Name": "SYSDIG_LOGGING",
+                "Value": "sysdig_logging"
+            },
+            {
+                "Name": "SYSDIG_ORCHESTRATOR",
+                "Value": "orchestrator_host"
+            }
+        ],
+        "LinuxParameters": {
+            "Capabilities": {
+                "Add": [
+                    "SYS_PTRACE"
+                ]
+            }
+        },
+        "VolumesFrom": [
+            {
+                "ReadOnly": true,
+                "SourceContainer": "SysdigInstrumentation"
+            }
+        ]
+    },
+    {
+        "Name": "other",
+        "Image": "other_image:latest",
+        "EntryPoint": [
+            "/opt/draios/bin/instrument"
+        ],
+        "Command": [
+            "/bin/other"
+        ],
+        "Environment": [
+            {
+                "Name": "SYSDIG_ORCHESTRATOR_PORT",
+                "Value": "orchestrator_port"
+            },
+            {
+                "Name": "SYSDIG_COLLECTOR",
+                "Value": "collector_host"
+            },
+            {
+                "Name": "SYSDIG_COLLECTOR_PORT",
+                "Value": "collector_port"
+            },
+            {
+                "Name": "SYSDIG_AGENT_ACCESS_KEY",
+                "Value": "sysdig_agent_access_key"
+            },
+            {
+                "Name": "SYSDIG_LOGGING",
+                "Value": "sysdig_logging"
+            },
+            {
+                "Name": "SYSDIG_ORCHESTRATOR",
+                "Value": "orchestrator_host"
+            }
+        ],
+        "LinuxParameters": {
+            "Capabilities": {
+                "Add": [
+                    "SYS_PTRACE"
+                ]
+            }
+        },
+        "VolumesFrom": [
+            {
+                "ReadOnly": true,
+                "SourceContainer": "SysdigInstrumentation"
+            }
+        ]
+    },
+    {
+        "EntryPoint": [
+            "/opt/draios/bin/logwriter"
+        ],
+        "Image": "workload_agent_image",
+        "Name": "SysdigInstrumentation",
+        "RepositoryCredentials": {
+            "CredentialsParameter": "image_auth_secret"
+        }
+    }
+]
