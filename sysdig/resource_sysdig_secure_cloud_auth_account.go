@@ -145,7 +145,7 @@ func resourceSysdigSecureCloudauthAccount() *schema.Resource {
 				Optional: true,
 				Elem:     accountFeatures,
 			},
-			"components": {
+			"component": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem:     accountComponents,
@@ -238,7 +238,7 @@ func resourceSysdigSecureCloudauthAccountDelete(ctx context.Context, data *schem
 }
 
 /*
-This function converts a schema set to map for iteration.
+This helper function converts a schema set to map for iteration.
 */
 func convertSchemaSetToMap(set *schema.Set) map[string]interface{} {
 	result := make(map[string]interface{})
@@ -281,7 +281,7 @@ func constructAccountFeatures(accountFeatures *cloudauth.AccountFeatures, featur
 	featureMap := convertSchemaSetToMap(featureData.(*schema.Set))
 
 	for name, value := range featureMap {
-		if value != nil && value.(*schema.Set) != nil {
+		if featureValues := value.(*schema.Set).List(); len(featureValues) > 0 {
 			valueMap := convertSchemaSetToMap(value.(*schema.Set))
 			switch name {
 			case "secure_config_posture":
@@ -313,7 +313,7 @@ cloudauthAccountFromResourceData() function
 func constructAccountComponents(accountComponents []*cloudauth.AccountComponent, data *schema.ResourceData) []*cloudauth.AccountComponent {
 	provider := data.Get("cloud_provider_type").(string)
 
-	for _, rc := range data.Get("components").([]interface{}) {
+	for _, rc := range data.Get("component").([]interface{}) {
 		resourceComponent := rc.(map[string]interface{})
 		component := &cloudauth.AccountComponent{}
 
@@ -385,7 +385,7 @@ func constructAccountComponents(accountComponents []*cloudauth.AccountComponent,
 func cloudauthAccountFromResourceData(data *schema.ResourceData) *v2.CloudauthAccountSecure {
 	accountComponents := constructAccountComponents([]*cloudauth.AccountComponent{}, data)
 
-	featureData := data.Get("feature").(interface{})
+	featureData := data.Get("feature").(*schema.Set)
 	accountFeatures := constructAccountFeatures(&cloudauth.AccountFeatures{}, featureData)
 
 	return &v2.CloudauthAccountSecure{
@@ -405,7 +405,7 @@ func cloudauthAccountToResourceData(data *schema.ResourceData, cloudAccount *v2.
 		data.Set("enabled", cloudAccount.Enabled),
 		data.Set("cloud_provider_id", cloudAccount.ProviderId),
 		data.Set("cloud_provider_type", cloudAccount.Provider.String()),
-		data.Set("components", cloudAccount.Components),
+		data.Set("component", cloudAccount.Components),
 		data.Set("feature", cloudAccount.Feature),
 	} {
 		if err != nil {
