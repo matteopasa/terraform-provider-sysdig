@@ -38,6 +38,19 @@ func resourceSysdigMonitorNotificationChannelSlack() *schema.Resource {
 			"channel": {
 				Type:     schema.TypeString,
 				Required: true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					// if the user did not create this notification channel and it is a private slack channel, the channel field is empty
+					// avoid unnecessary diffs
+					return old == new || new == ""
+				},
+				DiffSuppressOnRefresh: true,
+				ForceNew:              true,
+			},
+			"private_channel": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				ForceNew: true,
 			},
 			"show_section_runbook_links": {
 				Type:     schema.TypeBool,
@@ -154,6 +167,21 @@ func resourceSysdigMonitorNotificationChannelSlackUpdate(ctx context.Context, d 
 		return diag.FromErr(err)
 	}
 
+	// read the current notification channel look for the channel field: if it is empty, then we have no permissions to update it
+	// in this case we must also send the update request without it to avoid api errors on permissions
+	// in this case the terraform channel argument is actually immutable, the attribute is marked with forceNew to avoid confusion
+	id, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	currentNc, err := client.GetNotificationChannelById(ctx, id)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if currentNc.Options.Channel == "" {
+		nc.Options.Channel = ""
+	}
+
 	_, err = client.UpdateNotificationChannel(ctx, nc)
 	if err != nil {
 		return diag.FromErr(err)
@@ -192,6 +220,7 @@ func monitorNotificationChannelSlackFromResourceData(d *schema.ResourceData, tea
 	nc.Type = NOTIFICATION_CHANNEL_TYPE_SLACK
 	nc.Options.Url = d.Get("url").(string)
 	nc.Options.Channel = d.Get("channel").(string)
+	nc.Options.PrivateChannel = d.Get("private_channel").(bool)
 	nc.Options.TemplateConfiguration = []v2.NotificationChannelTemplateConfiguration{
 		{
 			TemplateKey: "SLACK_MONITOR_ALERT_NOTIFICATION_TEMPLATE_METADATA_v1",
@@ -243,6 +272,7 @@ func monitorNotificationChannelSlackToResourceData(nc *v2.NotificationChannel, d
 
 	_ = d.Set("url", nc.Options.Url)
 	_ = d.Set("channel", nc.Options.Channel)
+	_ = d.Set("private_channel", nc.Options.PrivateChannel)
 
 	runbookLinks := true
 	eventDetails := true

@@ -47,6 +47,8 @@ resource "sysdig_monitor_notification_channel_slack" "sample-slack" {
 
 * `channel` - (Required) Channel name from this Slack.
 
+* `private_channel` - (Optional) If true, the Slack channel name will be visible only to the user that created this notification channel. Default: false.
+
 * `enabled` - (Optional) If false, the channel will not emit notifications. Default is true.
 
 * `notify_when_ok` - (Optional) Send a new notification when the alert condition is

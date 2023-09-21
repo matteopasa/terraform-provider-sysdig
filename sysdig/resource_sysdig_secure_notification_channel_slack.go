@@ -39,6 +39,19 @@ func resourceSysdigSecureNotificationChannelSlack() *schema.Resource {
 			"channel": {
 				Type:     schema.TypeString,
 				Required: true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					// if the user did not create this notification channel and it is a private slack channel, the channel field is empty
+					// avoid unnecessary diffs
+					return old == new || new == ""
+				},
+				DiffSuppressOnRefresh: true,
+				ForceNew:              true,
+			},
+			"private_channel": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				ForceNew: true,
 			},
 			"template_version": {
 				Type:     schema.TypeString,
@@ -124,6 +137,21 @@ func resourceSysdigSecureNotificationChannelSlackUpdate(ctx context.Context, d *
 		return diag.FromErr(err)
 	}
 
+	// read the current notification channel look for the channel field: if it is empty, then we have no permissions to update it
+	// in this case we must also send the update request without it to avoid api errors on permissions
+	// in this case the terraform channel argument is actually immutable, the attribute is marked with forceNew to avoid confusion
+	id, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	currentNc, err := client.GetNotificationChannelById(ctx, id)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if currentNc.Options.Channel == "" {
+		nc.Options.Channel = ""
+	}
+
 	_, err = client.UpdateNotificationChannel(ctx, nc)
 	if err != nil {
 		return diag.FromErr(err)
@@ -162,6 +190,7 @@ func secureNotificationChannelSlackFromResourceData(d *schema.ResourceData, team
 	nc.Type = NOTIFICATION_CHANNEL_TYPE_SLACK
 	nc.Options.Url = d.Get("url").(string)
 	nc.Options.Channel = d.Get("channel").(string)
+	nc.Options.PrivateChannel = d.Get("private_channel").(bool)
 
 	setNotificationChannelSlackTemplateConfig(&nc, d)
 
@@ -207,6 +236,7 @@ func secureNotificationChannelSlackToResourceData(nc *v2.NotificationChannel, d 
 
 	_ = d.Set("url", nc.Options.Url)
 	_ = d.Set("channel", nc.Options.Channel)
+	_ = d.Set("private_channel", nc.Options.PrivateChannel)
 
 	err = getTemplateVersionFromNotificationChannelSlack(nc, d)
 

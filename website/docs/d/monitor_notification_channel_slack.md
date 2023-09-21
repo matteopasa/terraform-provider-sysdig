@@ -29,9 +29,9 @@ data "sysdig_monitor_notification_channel_slack" "nc_slack" {
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - The Notification Channel ID.
-* `name` - The Notification Channel Name.
 * `url` - URL of the Slack.
-* `channel` - Channel name from this Slack.
+* `channel` - Slack channel name.
+* `private_channel` - Whether the Slack Channel name has been marked as private or not.
 * `show_section_runbook_links` - Whether to include the runbook links section in the Slack messages.
 * `show_section_event_details` - Whether to include the event details section in the Slack messages.
 * `show_section_user_defined_content` - Whether to include the user defined section in the Slack messages.
